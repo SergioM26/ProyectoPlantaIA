@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlantaIA - Identifica Plantas con Inteligencia Artificial</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            background: #388E3C;
+            position: relative;
+        }
+
+        .container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 2;
+        }
+
+        .top-section {
+            flex: 1;
+            background: linear-gradient(135deg, #81C784 0%, #FBC02D 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 1rem;
+            z-index: 3;
+        }
+
+        .welcome-content {
+            text-align: center;
+            color: white;
+            z-index: 3;
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            max-width: 100%;
+        }
+
+        .welcome-content h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            color: #2E7D32;
+            line-height: 1.2;
+        }
+
+        .welcome-content p {
+            font-size: 1.3rem;
+            font-weight: 300;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+            color: #1B5E20;
+            line-height: 1.4;
+        }
+
+        .plant-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            animation: float 3s ease-in-out infinite;
+            color: #2E7D32;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .bottom-section {
+            background: #A1887F;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            z-index: 2;
+            position: relative;
+        }
+
+        .btn {
+            padding: 1rem 2.5rem;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            min-height: 56px;
+            touch-action: manipulation;
+        }
+
+        .btn-login {
+            background: linear-gradient(135deg, #FBC02D, #FF8F00);
+            color: #2E7D32;
+        }
+
+        .btn-register {
+            background: linear-gradient(135deg, #81C784, #388E3C);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(-1px);
+        }
+
+        /* Formularios ocultos debajo */
+        .form-section {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 100vh; /* Ocupa toda la altura de la pantalla */
+            background: #FFF8E1;
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .form-section.active {
+            top: 0; /* Aparece desde arriba ocupando toda la pantalla */
+        }
+
+        .form-content {
+            max-width: 500px; /* Más ancho para mejor uso del espacio */
+            margin: 0 auto;
+            padding-top: 4rem; /* Más espacio arriba */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .form-container {
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            border: 3px solid #81C784;
+            margin-bottom: 2rem;
+            display: none;
+            width: 100%;
+        }
+
+        .form-container.active {
+            display: block;
+        }
+
+        .form-container h2 {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: #2E7D32;
+            font-size: 2.5rem; /* Título más grande */
+        }
+
+        .form-group {
+            margin-bottom: 2rem; /* Más espacio entre campos */
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.8rem; /* Más espacio entre label e input */
+            color: #2E7D32;
+            font-weight: 500;
+            font-size: 1.1rem; /* Labels más grandes */
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 1.2rem; /* Inputs más grandes */
+            border: 2px solid #A1887F;
+            border-radius: 12px; /* Bordes más redondeados */
+            font-size: 1.1rem; /* Texto más grande */
+            transition: border-color 0.3s ease;
+            background: white;
+            min-height: 56px; /* Altura mínima mayor */
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #81C784;
+            box-shadow: 0 0 0 3px rgba(129, 199, 132, 0.2);
+        }
+
+        .form-btn {
+            width: 100%;
+            padding: 1.2rem; /* Botón más grande */
+            background: linear-gradient(135deg, #81C784 0%, #388E3C 100%);
+            color: white;
+            border: none;
+            border-radius: 12px; /* Bordes más redondeados */
+            font-size: 1.2rem; /* Texto más grande */
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-height: 56px; /* Altura mínima mayor */
+            touch-action: manipulation;
+        }
+
+        .form-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(129, 199, 132, 0.4);
+        }
+
+        .back-btn {
+            position: fixed;
+            top: 2rem;
+            left: 2rem;
+            background: #A1887F;
+            border: none;
+            font-size: 1.5rem;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 0.8rem;
+            min-width: 50px;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            touch-action: manipulation;
+            z-index: 10;
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .back-btn.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .back-btn:hover {
+            background: #8D6E63;
+            transform: translateY(-2px);
+        }
+
+        /* Animaciones cuando se presiona un botón */
+        .container.login-active .top-section {
+            transform: translateY(-100%);
+        }
+
+        .container.register-active .top-section {
+            transform: translateY(-100%);
+        }
+
+        .container.login-active .welcome-content,
+        .container.register-active .welcome-content {
+            opacity: 0;
+            transform: scale(0.8);
+        }
+
+        /* Responsive para tablets */
+        @media (max-width: 1024px) {
+            .welcome-content h1 {
+                font-size: 3rem;
+            }
+            
+            .welcome-content p {
+                font-size: 1.2rem;
+            }
+            
+            .bottom-section {
+                padding: 1.5rem;
+                gap: 1.5rem;
+            }
+            
+            .btn {
+                padding: 0.9rem 2rem;
+                font-size: 1rem;
+            }
+            
+            .form-content {
+                max-width: 450px;
+                padding-top: 3rem;
+            }
+        }
+
+        /* Responsive para móviles */
+        @media (max-width: 768px) {
+            .welcome-content h1 {
+                font-size: 2.2rem;
+                margin-bottom: 0.8rem;
+            }
+            
+            .welcome-content p {
+                font-size: 1rem;
+                margin-bottom: 1.5rem;
+            }
+            
+            .plant-icon {
+                font-size: 3rem;
+                margin-bottom: 0.8rem;
+            }
+            
+            .bottom-section {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1.5rem;
+            }
+            
+            .btn {
+                padding: 0.8rem 1.5rem;
+                font-size: 1rem;
+                width: 100%;
+                max-width: 280px;
+            }
+            
+            .form-section {
+                padding: 1rem;
+            }
+            
+            .form-content {
+                max-width: 100%;
+                padding-top: 2rem;
+            }
+            
+            .form-container {
+                padding: 2rem 1.5rem;
+                margin-bottom: 1rem;
+            }
+            
+            .form-container h2 {
+                font-size: 2rem;
+                margin-bottom: 1.5rem;
+            }
+            
+            .form-group {
+                margin-bottom: 1.5rem;
+            }
+            
+            .form-group label {
+                font-size: 1rem;
+                margin-bottom: 0.5rem;
+            }
+            
+            .form-group input {
+                padding: 1rem;
+                font-size: 16px; /* Previene zoom en iOS */
+                min-height: 48px;
+            }
+            
+            .form-btn {
+                padding: 1rem;
+                font-size: 1.1rem;
+                min-height: 48px;
+            }
+            
+            .back-btn {
+                top: 1rem;
+                left: 1rem;
+                padding: 0.6rem;
+                min-width: 44px;
+                min-height: 44px;
+                font-size: 1.2rem;
+            }
+        }
+
+        /* Responsive para móviles pequeños */
+        @media (max-width: 480px) {
+            .welcome-content h1 {
+                font-size: 1.8rem;
+            }
+            
+            .welcome-content p {
+                font-size: 0.9rem;
+            }
+            
+            .plant-icon {
+                font-size: 2.5rem;
+            }
+            
+            .top-section {
+                padding: 0.5rem;
+            }
+            
+            .bottom-section {
+                padding: 1rem;
+            }
+            
+            .btn {
+                padding: 0.7rem 1.2rem;
+                font-size: 0.9rem;
+            }
+            
+            .form-section {
+                padding: 0.5rem;
+            }
+            
+            .form-content {
+                padding-top: 1.5rem;
+            }
+            
+            .form-container {
+                padding: 1.5rem 1rem;
+            }
+            
+            .form-container h2 {
+                font-size: 1.8rem;
+            }
+            
+            .form-group {
+                margin-bottom: 1.2rem;
+            }
+        }
+
+        /* Mejoras para pantallas muy pequeñas */
+        @media (max-width: 360px) {
+            .welcome-content h1 {
+                font-size: 1.6rem;
+            }
+            
+            .welcome-content p {
+                font-size: 0.85rem;
+            }
+            
+            .plant-icon {
+                font-size: 2rem;
+            }
+            
+            .btn {
+                padding: 0.6rem 1rem;
+                font-size: 0.85rem;
+            }
+        }
+
+        /* Mejoras de accesibilidad táctil */
+        @media (hover: none) and (pointer: coarse) {
+            .btn:hover {
+                transform: none;
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            }
+            
+            .btn:active {
+                transform: translateY(-1px);
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            }
+            
+            .form-btn:hover {
+                transform: none;
+                box-shadow: 0 8px 25px rgba(129, 199, 132, 0.4);
+            }
+            
+            .form-btn:active {
+                transform: translateY(-1px);
+            }
+        }
+
+        /* Prevenir zoom en inputs en iOS */
+        @media screen and (-webkit-min-device-pixel-ratio: 0) {
+            select, textarea, input[type="text"], input[type="password"], input[type="datetime"], input[type="datetime-local"], input[type="date"], input[type="month"], input[type="time"], input[type="week"], input[type="number"], input[type="email"], input[type="url"], input[type="search"], input[type="tel"], input[type="color"] {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="container">
+        <!-- Sección superior con bienvenida -->
+        <div class="top-section">
+            <div class="welcome-content">
+                <div class="plant-icon">
+                    <i class="fas fa-seedling"></i>
+                </div>
+                <h1>¡Bienvenido a PlantaIA!</h1>
+                <p>Identifica cualquier planta con solo una foto usando inteligencia artificial</p>
+            </div>
+        </div>
+
+        <!-- Sección inferior con botones -->
+        <div class="bottom-section">
+            <button class="btn btn-login" onclick="showLogin()">
+                <i class="fas fa-sign-in-alt"></i>
+                Iniciar Sesión
+            </button>
+            <button class="btn btn-register" onclick="showRegister()">
+                <i class="fas fa-user-plus"></i>
+                Registrarse
+            </button>
+        </div>
+
+        <!-- Sección de formularios oculta debajo -->
+        <div class="form-section" id="formSection">
+            <button class="back-btn" id="backBtn" onclick="hideForms()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            
+            <div class="form-content">
+                <!-- Formulario de Login -->
+                <div class="form-container" id="loginForm">
+                    <h2>Iniciar Sesión</h2>
+                    <form>
+                        <div class="form-group">
+                            <label for="loginEmail">Correo electrónico</label>
+                            <input type="email" id="loginEmail" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="loginPassword">Contraseña</label>
+                            <input type="password" id="loginPassword" required>
+                        </div>
+                        <button type="submit" class="form-btn">Iniciar Sesión</button>
+                    </form>
+                </div>
+
+                <!-- Formulario de Registro -->
+                <div class="form-container" id="registerForm">
+                    <h2>Crear Cuenta</h2>
+                    <form>
+                        <div class="form-group">
+                            <label for="registerName">Nombre completo</label>
+                            <input type="text" id="registerName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="registerEmail">Correo electrónico</label>
+                            <input type="email" id="registerEmail" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="registerPassword">Contraseña</label>
+                            <input type="password" id="registerPassword" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="confirmPassword">Confirmar contraseña</label>
+                            <input type="password" id="confirmPassword" required>
+                        </div>
+                        <button type="submit" class="form-btn">Crear Cuenta</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showLogin() {
+            console.log('Mostrando login...');
+            const container = document.getElementById('container');
+            const formSection = document.getElementById('formSection');
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            const backBtn = document.getElementById('backBtn');
+            
+            // Ocultar formulario de registro y mostrar el de login
+            registerForm.classList.remove('active');
+            loginForm.classList.add('active');
+            
+            // Mostrar botón de regreso
+            backBtn.classList.add('active');
+            
+            // Activar animaciones
+            container.classList.add('login-active');
+            formSection.classList.add('active');
+        }
+
+        function showRegister() {
+            console.log('Mostrando registro...');
+            const container = document.getElementById('container');
+            const formSection = document.getElementById('formSection');
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            const backBtn = document.getElementById('backBtn');
+            
+            // Ocultar formulario de login y mostrar el de registro
+            loginForm.classList.remove('active');
+            registerForm.classList.add('active');
+            
+            // Mostrar botón de regreso
+            backBtn.classList.add('active');
+            
+            // Activar animaciones
+            container.classList.add('register-active');
+            formSection.classList.add('active');
+        }
+
+        function hideForms() {
+            console.log('Ocultando formularios...');
+            const container = document.getElementById('container');
+            const formSection = document.getElementById('formSection');
+            const backBtn = document.getElementById('backBtn');
+            
+            // Ocultar botón de regreso
+            backBtn.classList.remove('active');
+            
+            // Ocultar sección de formularios
+            formSection.classList.remove('active');
+            
+            setTimeout(() => {
+                container.classList.remove('login-active', 'register-active');
+            }, 100);
+        }
+
+        // Manejar envío de formularios
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                // Aquí puedes agregar la lógica para procesar el formulario
+                alert('Formulario enviado correctamente');
+            });
+        });
+
+        // Mejorar experiencia táctil en móviles
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Página cargada correctamente');
+            
+            // Prevenir doble tap zoom en botones
+            document.querySelectorAll('.btn, .form-btn, .back-btn').forEach(button => {
+                button.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                });
+            });
+        });
+    </script>
+</body>
+</html>
