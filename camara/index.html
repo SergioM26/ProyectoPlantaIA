@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Identificación de Plantas - Cámara</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🌱 Identificador de Plantas</h1>
+            <p>Captura una foto de tu planta para identificarla</p>
+        </header>
+
+        <main class="main-content">
+            <!-- Sección de cámara -->
+            <section class="camera-section" id="cameraSection">
+                <div class="camera-container">
+                    <video id="video" autoplay muted playsinline></video>
+                    <canvas id="canvas" style="display: none;"></canvas>
+                    <div class="camera-overlay">
+                        <div class="focus-frame"></div>
+                        <p class="instruction">Posiciona la planta en el marco y toca para capturar</p>
+                    </div>
+                </div>
+                <div class="camera-controls">
+                    <button id="captureBtn" class="btn btn-primary">
+                        📸 Capturar Foto
+                    </button>
+                    <button id="retakeBtn" class="btn btn-secondary" style="display: none;">
+                        🔄 Tomar Otra
+                    </button>
+                </div>
+            </section>
+
+            <!-- Sección de carga -->
+            <section class="loading-section" id="loadingSection" style="display: none;">
+                <div class="loading-spinner"></div>
+                <p>Identificando tu planta...</p>
+                <div class="loading-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </section>
+
+            <!-- Sección de resultados -->
+            <section class="results-section" id="resultsSection" style="display: none;">
+                <div class="plant-card">
+                    <div class="plant-image-container">
+                        <img id="capturedImage" src="" alt="Planta capturada">
+                        <div class="confidence-badge" id="confidenceBadge"></div>
+                    </div>
+                    
+                    <div class="plant-info">
+                        <h2 id="plantName" class="plant-name"></h2>
+                        <p id="plantScientificName" class="scientific-name"></p>
+                        <div class="plant-details">
+                            <div class="detail-item">
+                                <span class="label">Familia:</span>
+                                <span id="plantFamily" class="value"></span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">Género:</span>
+                                <span id="plantGenus" class="value"></span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">Confianza:</span>
+                                <span id="plantConfidence" class="value"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="plant-description" id="plantDescription"></div>
+                        
+                        <div class="action-buttons">
+                            <button id="plantBtn" class="btn btn-success">
+                                🌱 ¡Plantar esta planta!
+                            </button>
+                            <button id="tryAgainBtn" class="btn btn-secondary">
+                                🔄 Intentar con otra foto
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Modal de captura Pokémon -->
+            <div class="pokemon-modal" id="pokemonModal" style="display: none;">
+                <div class="pokemon-content">
+                    <div class="pokemon-animation">
+                        <div class="pokeball">
+                            <div class="pokeball-top"></div>
+                            <div class="pokeball-bottom"></div>
+                            <div class="pokeball-center"></div>
+                        </div>
+                        <div class="sparkles">
+                            <span>✨</span>
+                            <span>✨</span>
+                            <span>✨</span>
+                            <span>✨</span>
+                        </div>
+                    </div>
+                    <h2>¡Planta Capturada!</h2>
+                    <p>Tu nueva planta ha sido añadida a tu colección</p>
+                    
+                    <div class="naming-section">
+                        <label for="plantNickname">¿Cómo quieres llamar a tu planta?</label>
+                        <input type="text" id="plantNickname" placeholder="Ej: Mi Rosa Favorita" maxlength="20">
+                        <button id="confirmPlantBtn" class="btn btn-success">
+                            🌱 Confirmar Plantación
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección de error -->
+            <section class="error-section" id="errorSection" style="display: none;">
+                <div class="error-card">
+                    <div class="error-icon">⚠️</div>
+                    <h3>Error en la identificación</h3>
+                    <p id="errorMessage"></p>
+                    <button id="retryBtn" class="btn btn-primary">
+                        🔄 Intentar de nuevo
+                    </button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

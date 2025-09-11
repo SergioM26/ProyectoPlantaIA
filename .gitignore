@@ -1,0 +1,46 @@
+# Archivos de configuración sensibles
+config.js
+config.local.js
+.env
+.env.local
+
+# API Keys y secretos
+*api-key*
+*secret*
+*private*
+
+# Archivos de desarrollo
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+
+# Dependencias
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Archivos de IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Archivos de sistema
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Archivos de backup
+*.bak
+*.backup
+*~
+
+# Archivos de prueba
+test-images/
+temp/
