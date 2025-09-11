@@ -3,7 +3,7 @@
 
 const CONFIG = {
     // Reemplaza con tu API key real de Plant.id
-    PLANT_ID_API_KEY: 'TU_API_KEY_AQUI',
+    PLANT_ID_API_KEY: 'nanovago99',
     
     // URL de la API de Plant.id
     PLANT_ID_API_URL: 'https://api.plant.id/v3/identify',
