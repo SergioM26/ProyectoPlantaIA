@@ -1,6 +1,7 @@
 // Datos de la aplicación
 let currentUser = 'Usuario'; // Por defecto, se puede cambiar
 let plants = []; // Array para almacenar las plantas
+let tanks = []; // Tanques del usuario
 let waterLevel = 75; // Nivel de agua por defecto (porcentaje)
 let tankHeight = 50; // Altura del tanque en cm
 let tankWidth = 30; // Ancho del tanque en cm
@@ -104,35 +105,12 @@ function createPlantsContent() {
 
 function createWaterContent() {
     return `
-        <div class="water-container">
-            <div class="tank-info">
-                <h3>💧 Nivel de Agua</h3>
-            </div>
-            <div class="water-tank">
-                <div class="water-level" id="water-level" style="height: ${waterLevel}%"></div>
-                <div class="water-percentage" id="water-percentage">${waterLevel}%</div>
-            </div>
-            
-            <div class="water-data">
-                <div class="data-item">
-                    <label>Altura (cm)</label>
-                    <input type="number" id="tank-height" value="${tankHeight}" onchange="updateTankDimensions()">
-                </div>
-                <div class="data-item">
-                    <label>Ancho (cm)</label>
-                    <input type="number" id="tank-width" value="${tankWidth}" onchange="updateTankDimensions()">
-                </div>
-            </div>
-            
-            <button class="add-container-btn" onclick="addContainer()">
-                ➕ Agregar Otro Contenedor
-            </button>
-            
-            <div class="leak-alert" id="leak-alert">
-                <div class="alert-icon">⚠️</div>
-                <div>¡Alerta! Posible fuga detectada</div>
-            </div>
+        <div id="tanks-list"></div>
+        <div class="leak-alert" id="leak-alert">
+            <div class="alert-icon">⚠️</div>
+            <div>¡Alerta! Posible fuga detectada</div>
         </div>
+        <button class="fab-btn" id="add-tank-fab" title="Agregar tanque" onclick="openAddTankModal()">➕</button>
     `;
 }
 
@@ -179,6 +157,36 @@ function createModal() {
     `;
     
     document.body.appendChild(modal);
+
+    // Modal para agregar tanque
+    const modalTank = document.createElement('div');
+    modalTank.className = 'modal';
+    modalTank.id = 'add-tank-modal';
+    modalTank.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>💧 Agregar Tanque</h2>
+            </div>
+            <form id="add-tank-form">
+                <div class="form-group">
+                    <label for="tank-name">Nombre del tanque:</label>
+                    <input type="text" id="tank-name" required placeholder="Ej: Tanque Patio">
+                </div>
+                <div class="form-group">
+                    <label for="tank-height-cm">Altura (cm):</label>
+                    <input type="number" id="tank-height-cm" min="1" step="0.1" required>
+                </div>
+                <div class="form-group">
+                    <label for="tank-diameter-cm">Diámetro (cm):</label>
+                    <input type="number" id="tank-diameter-cm" min="1" step="0.1" required>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddTankModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>`;
+    document.body.appendChild(modalTank);
 }
 
 function setupEventListeners() {
@@ -195,6 +203,11 @@ function setupEventListeners() {
         if (e.target.id === 'add-plant-form') {
             e.preventDefault();
             addPlant();
+            return;
+        }
+        if (e.target.id === 'add-tank-form') {
+            e.preventDefault();
+            createTankFromModal();
         }
     });
     
@@ -228,6 +241,10 @@ function showTab(tabName) {
     document.getElementById(`${tabName}-content`).classList.add('active');
     
     currentTab = tabName;
+
+    if (tabName === 'water') {
+        renderTanks();
+    }
 }
 
 function openAddPlantModal() {
@@ -439,6 +456,24 @@ function closeModal() {
     document.getElementById('add-plant-form').reset();
 }
 
+function openAddTankModal() {
+    const m = document.getElementById('add-tank-modal');
+    if (m) {
+        m.classList.add('show');
+        const nameInput = document.getElementById('tank-name');
+        if (nameInput) nameInput.focus();
+    }
+}
+
+function closeAddTankModal() {
+    const m = document.getElementById('add-tank-modal');
+    if (m) {
+        m.classList.remove('show');
+        const form = document.getElementById('add-tank-form');
+        if (form) form.reset();
+    }
+}
+
 function previewPhoto(event) {
     const file = event.target.files[0];
     if (file) {
@@ -560,6 +595,106 @@ function addContainer() {
     showNotification(`Contenedor ${containerCount + 1} agregado. (Funcionalidad en desarrollo)`);
 }
 
+function renderTanks() {
+    const list = document.getElementById('tanks-list');
+    if (!list) return;
+    if (!tanks || tanks.length === 0) {
+        list.innerHTML = '<p style="text-align:center; color: var(--texto-claro); padding: 20px;">Aún no tienes tanques. Usa el botón ➕ para agregar uno.</p>';
+        return;
+    }
+    list.innerHTML = tanks.map((t) => {
+        const altura = Number(t.altura) || 0;
+        const diametro = Number(t.ancho) || 0;
+        const lectura = Math.max(0, Math.min(altura, Number(t.sensorCm) || 0)); // cm desde arriba
+        const columnaAguaCm = Math.max(0, altura - lectura); // altura de agua
+        const fillPercent = altura > 0 ? (columnaAguaCm / altura) * 100 : 0;
+        const capacidadL = calcCylCapacityLiters(altura, diametro);
+        const litrosActuales = capacidadL * (fillPercent / 100);
+        return `
+        <div class="water-container">
+            <div class="tank-info">
+                <h3>${escapeHtml(t.nombre)}</h3>
+                <small>${litrosActuales.toFixed(1)} L / ${capacidadL.toFixed(1)} L · ${columnaAguaCm.toFixed(1)}cm / ${altura.toFixed(1)}cm · ${fillPercent.toFixed(0)}%</small>
+            </div>
+            <div class="water-tank">
+                <div class="water-level" style="height: ${fillPercent}%"></div>
+                <div class="water-percentage">${fillPercent.toFixed(0)}%</div>
+            </div>
+            <div class="water-data">
+                <div class="data-item">
+                    <label>Altura (cm)</label>
+                    <input type="number" value="${altura}" min="1" step="0.1" onchange="onTankDimChange(${t.id}, 'altura', this.value)">
+                </div>
+                <div class="data-item">
+                    <label>Diámetro (cm)</label>
+                    <input type="number" value="${diametro}" min="1" step="0.1" onchange="onTankDimChange(${t.id}, 'ancho', this.value)">
+                </div>
+                <div class="data-item" style="grid-column: 1 / -1;">
+                    <label>Lectura sensor (cm desde arriba)</label>
+                    <input type="number" value="${lectura}" min="0" step="0.1" onchange="onTankSensorChange(${t.id}, this.value)">
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function calcCylCapacityLiters(alturaCm, diametroCm) {
+    const radiusCm = (Number(diametroCm) || 0) / 2;
+    const heightCm = Number(alturaCm) || 0;
+    const volumeCm3 = Math.PI * radiusCm * radiusCm * heightCm; // cm^3
+    return volumeCm3 / 1000; // litros
+}
+
+function onTankDimChange(id, field, value) {
+    const t = tanks.find(x => x.id === id);
+    if (!t) return;
+    t[field] = Number(value) || 0;
+    renderTanks();
+}
+
+function onTankSensorChange(id, value) {
+    const t = tanks.find(x => x.id === id);
+    if (!t) return;
+    const altura = Number(t.altura) || 0;
+    const lectura = Math.max(0, Math.min(altura, Number(value) || 0));
+    t.sensorCm = lectura;
+    renderTanks();
+}
+
+async function createTankFromModal() {
+    const nombre = document.getElementById('tank-name').value.trim();
+    const altura = parseFloat(document.getElementById('tank-height-cm').value);
+    const ancho = parseFloat(document.getElementById('tank-diameter-cm').value);
+    if (!nombre || !(altura > 0) || !(ancho > 0)) {
+        showNotification('Completa nombre, altura y diámetro válidos', 'warning');
+        return;
+    }
+    try {
+        const resp = await fetch('api/tanques_create.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ nombre, altura, ancho })
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.message || 'Error al crear tanque');
+        tanks.push({ id: data.id, nombre: data.nombre, altura: data.altura, ancho: data.ancho, sensorCm: 0 });
+        closeAddTankModal();
+        renderTanks();
+        showNotification('Tanque agregado', 'success');
+    } catch (e) {
+        console.error(e);
+        showNotification('No se pudo crear el tanque', 'error');
+    }
+}
+
+function escapeHtml(str) {
+    return String(str).replace(/[&<>\"]+/g, function(s) {
+        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' };
+        return map[s] || s;
+    });
+}
+
 function checkLeak() {
     // Simular detección de fuga (10% de probabilidad)
     const leakProbability = Math.random();
@@ -648,6 +783,18 @@ function loadUserData() {
 				dateAdded: p.fecha_cuidado
 			}));
 			updatePlantsDisplay();
+		})
+		.catch((err) => {
+			console.error(err);
+		});
+
+	// Cargar tanques desde el backend
+	fetch('api/tanques_list.php', { credentials: 'include' })
+		.then(async (resp) => {
+			const data = await resp.json();
+			if (!resp.ok) throw new Error(data.message || 'Error al cargar tanques');
+			tanks = (data.tanques || []).map(t => ({ id: t.id, nombre: t.nombre, altura: t.altura, ancho: t.ancho, sensorCm: 0 }));
+			if (currentTab === 'water') renderTanks();
 		})
 		.catch((err) => {
 			console.error(err);

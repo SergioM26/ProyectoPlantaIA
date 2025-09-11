@@ -521,6 +521,28 @@ body {
   margin-bottom: 5px;
 }
 
+/* Botón flotante agregar tanque */
+.fab-btn {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--amarillo-semilla);
+  color: var(--texto-oscuro);
+  border: none;
+  box-shadow: 0 6px 20px var(--sombra);
+  font-size: 1.4rem;
+  cursor: pointer;
+  z-index: 1002;
+}
+
+.fab-btn:hover {
+  background: #F9A825;
+  transform: translateY(-2px);
+}
+
 /* Animaciones */
 @keyframes fadeIn {
   from { opacity: 0; }
