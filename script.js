@@ -1,10 +1,23 @@
 // Datos de la aplicación
 let currentUser = 'Usuario'; // Por defecto, se puede cambiar
 let plants = []; // Array para almacenar las plantas
-let waterLevel = 75; // Nivel de agua por defecto (porcentaje)
-let tankHeight = 50; // Altura del tanque en cm
-let tankWidth = 30; // Ancho del tanque en cm
 let hasLeak = false; // Estado de fuga
+
+// Contenedores de agua
+let waterContainers = [
+    {
+        id: 1,
+        name: 'Tanque Principal',
+        height: 50, // Altura del tanque en cm
+        width: 30, // Ancho del tanque en cm
+        length: 40, // Largo del tanque en cm
+        sensorData: {
+            waterHeight: 37.5, // Altura del agua en cm
+            lastUpdate: new Date().toISOString()
+        },
+        waterLevel: 75 // Nivel calculado (porcentaje)
+    }
+];
 
 // Elementos del DOM
 let currentTab = 'plants';
@@ -23,6 +36,11 @@ function initializeApp() {
     
     // Mostrar pestaña inicial
     showTab('plants');
+    
+    // Validar y ajustar datos del sensor de todos los contenedores
+    waterContainers.forEach(container => {
+        validateContainerSensorData(container);
+    });
     
     // Actualizar nivel de agua
     updateWaterLevel();
@@ -85,33 +103,85 @@ function createPlantsContent() {
 
 function createWaterContent() {
     return `
-        <div class="water-container">
-            <div class="tank-info">
-                <h3>💧 Nivel de Agua</h3>
+        <div class="water-containers-grid">
+            ${waterContainers.map(container => createContainerCard(container)).join('')}
             </div>
+        
+        <div class="container-actions">
+            <button class="add-container-btn" onclick="openAddContainerModal()">
+                ➕ Agregar Nuevo Contenedor
+            </button>
+        </div>
+        
+        <div class="leak-alert" id="leak-alert">
+            <div class="alert-icon">⚠️</div>
+            <div>¡Alerta! Posible fuga detectada</div>
+        </div>
+    `;
+}
+
+function createContainerCard(container) {
+    const waterInfo = calculateContainerWaterLevel(container);
+    
+    return `
+        <div class="water-container-card" data-container-id="${container.id}">
+            <div class="container-header">
+                <h3>💧 ${container.name}</h3>
+                <div class="container-actions">
+                    <button class="action-btn edit-btn" onclick="editContainer(${container.id})" title="Editar contenedor">
+                        ✏️
+                    </button>
+                    <button class="action-btn delete-btn" onclick="deleteContainer(${container.id})" title="Eliminar contenedor">
+                        🗑️
+                    </button>
+                </div>
+            </div>
+            
+            <div class="sensor-status">
+                <span class="sensor-indicator ${container.sensorData.lastUpdate ? 'active' : 'inactive'}"></span>
+                <span class="sensor-text">Sensor ${container.sensorData.lastUpdate ? 'Conectado' : 'Desconectado'}</span>
+            </div>
+            
             <div class="water-tank">
-                <div class="water-level" id="water-level" style="height: ${waterLevel}%"></div>
-                <div class="water-percentage" id="water-percentage">${waterLevel}%</div>
+                <div class="water-level" id="water-level-${container.id}" style="height: ${waterInfo.percentage}%"></div>
+                <div class="water-percentage" id="water-percentage-${container.id}">${waterInfo.percentage}%</div>
+            </div>
+            
+            <div class="water-details">
+                <div class="detail-item">
+                    <span class="detail-label">Volumen:</span>
+                    <span class="detail-value" id="water-volume-${container.id}">${Math.round(waterInfo.volume / 1000 * 10) / 10}L / ${Math.round(waterInfo.totalVolume / 1000 * 10) / 10}L</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Altura:</span>
+                    <span class="detail-value" id="water-height-${container.id}">${waterInfo.height}cm / ${waterInfo.totalHeight}cm</span>
+                </div>
             </div>
             
             <div class="water-data">
+                <h4>📏 Dimensiones</h4>
                 <div class="data-item">
                     <label>Altura (cm)</label>
-                    <input type="number" id="tank-height" value="${tankHeight}" onchange="updateTankDimensions()">
+                    <input type="number" id="tank-height-${container.id}" value="${container.height}" onchange="updateContainerDimensions(${container.id})">
                 </div>
                 <div class="data-item">
                     <label>Ancho (cm)</label>
-                    <input type="number" id="tank-width" value="${tankWidth}" onchange="updateTankDimensions()">
+                    <input type="number" id="tank-width-${container.id}" value="${container.width}" onchange="updateContainerDimensions(${container.id})">
+                </div>
+                <div class="data-item">
+                    <label>Largo (cm)</label>
+                    <input type="number" id="tank-length-${container.id}" value="${container.length}" onchange="updateContainerDimensions(${container.id})">
                 </div>
             </div>
             
-            <button class="add-container-btn" onclick="addContainer()">
-                ➕ Agregar Otro Contenedor
+            <div class="sensor-controls">
+                <h4>🔧 Control del Sensor</h4>
+                <button class="btn btn-secondary" onclick="simulateContainerSensorData(${container.id})">
+                    📡 Simular Datos
             </button>
-            
-            <div class="leak-alert" id="leak-alert">
-                <div class="alert-icon">⚠️</div>
-                <div>¡Alerta! Posible fuga detectada</div>
+                <button class="btn btn-primary" onclick="updateContainerSensorData(${container.id})">
+                    🔄 Actualizar
+                </button>
             </div>
         </div>
     `;
@@ -208,7 +278,19 @@ function showTab(tabName) {
     document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
     document.getElementById(`${tabName}-content`).classList.add('active');
     
+    // Si se cambia a la pestaña de agua, actualizar el contenido
+    if (tabName === 'water') {
+        updateWaterContent();
+    }
+    
     currentTab = tabName;
+}
+
+function updateWaterContent() {
+    const waterContent = document.getElementById('water-content');
+    if (waterContent) {
+        waterContent.innerHTML = createWaterContent();
+    }
 }
 
 function openAddPlantModal() {
@@ -521,25 +603,308 @@ function deletePlant(plantId) {
     }
 }
 
+// Función para calcular el nivel de agua de un contenedor específico
+function calculateContainerWaterLevel(container) {
+    // Validar que las dimensiones sean válidas
+    if (container.height <= 0 || container.width <= 0 || container.length <= 0) {
+        console.warn('Dimensiones del contenedor inválidas:', container);
+        return {
+            percentage: 0,
+            volume: 0,
+            totalVolume: 0,
+            height: 0,
+            totalHeight: container.height
+        };
+    }
+    
+    // Asegurar que la altura del agua no exceda la altura del tanque
+    const validWaterHeight = Math.max(0, Math.min(container.sensorData.waterHeight, container.height));
+    
+    // Calcular el volumen total del tanque
+    const tankVolume = container.height * container.width * container.length; // en cm³
+    
+    // Calcular el volumen actual de agua basado en la altura medida por el sensor
+    const currentWaterVolume = validWaterHeight * container.width * container.length; // en cm³
+    
+    // Calcular el porcentaje de agua
+    const calculatedLevel = tankVolume > 0 ? (currentWaterVolume / tankVolume) * 100 : 0;
+    const clampedLevel = Math.max(0, Math.min(100, calculatedLevel));
+    
+    // Actualizar el nivel de agua del contenedor
+    container.waterLevel = Math.round(clampedLevel * 10) / 10; // Redondear a 1 decimal
+    
+    // Si la altura del agua fue ajustada, actualizar el sensor
+    if (validWaterHeight !== container.sensorData.waterHeight) {
+        container.sensorData.waterHeight = validWaterHeight;
+        console.log(`Altura del agua ajustada automáticamente en ${container.name}:`, validWaterHeight);
+    }
+    
+    return {
+        percentage: container.waterLevel,
+        volume: currentWaterVolume,
+        totalVolume: tankVolume,
+        height: validWaterHeight,
+        totalHeight: container.height
+    };
+}
+
 function updateWaterLevel() {
-    const waterLevelElement = document.getElementById('water-level');
-    const waterPercentageElement = document.getElementById('water-percentage');
+    // Actualizar todos los contenedores
+    waterContainers.forEach(container => {
+        updateContainerDisplay(container);
+    });
+}
+
+function updateContainerDisplay(container) {
+    const waterInfo = calculateContainerWaterLevel(container);
+    
+    const waterLevelElement = document.getElementById(`water-level-${container.id}`);
+    const waterPercentageElement = document.getElementById(`water-percentage-${container.id}`);
+    const waterVolumeElement = document.getElementById(`water-volume-${container.id}`);
+    const waterHeightElement = document.getElementById(`water-height-${container.id}`);
     
     if (waterLevelElement && waterPercentageElement) {
-        waterLevelElement.style.height = waterLevel + '%';
-        waterPercentageElement.textContent = waterLevel + '%';
+        waterLevelElement.style.height = waterInfo.percentage + '%';
+        waterPercentageElement.textContent = waterInfo.percentage + '%';
+    }
+    
+    // Actualizar información adicional si los elementos existen
+    if (waterVolumeElement) {
+        waterVolumeElement.textContent = `${Math.round(waterInfo.volume / 1000 * 10) / 10}L / ${Math.round(waterInfo.totalVolume / 1000 * 10) / 10}L`;
+    }
+    
+    if (waterHeightElement) {
+        waterHeightElement.textContent = `${waterInfo.height}cm / ${waterInfo.totalHeight}cm`;
     }
 }
 
-function updateTankDimensions() {
-    tankHeight = parseInt(document.getElementById('tank-height').value) || 50;
-    tankWidth = parseInt(document.getElementById('tank-width').value) || 30;
+// Función para actualizar dimensiones de un contenedor específico
+function updateContainerDimensions(containerId) {
+    const container = waterContainers.find(c => c.id === containerId);
+    if (!container) return;
+    
+    const newHeight = parseInt(document.getElementById(`tank-height-${containerId}`).value) || 50;
+    const newWidth = parseInt(document.getElementById(`tank-width-${containerId}`).value) || 30;
+    const newLength = parseInt(document.getElementById(`tank-length-${containerId}`).value) || 40;
+    
+    // Validar que las dimensiones sean positivas
+    if (newHeight <= 0 || newWidth <= 0 || newLength <= 0) {
+        showNotification('Las dimensiones del contenedor deben ser valores positivos', 'error');
+        return;
+    }
+    
+    // Guardar dimensiones anteriores para comparación
+    const oldHeight = container.height;
+    const oldWidth = container.width;
+    const oldLength = container.length;
+    
+    // Actualizar las dimensiones
+    container.height = newHeight;
+    container.width = newWidth;
+    container.length = newLength;
+    
+    // Si la altura del tanque cambió, ajustar la altura del agua del sensor si es necesario
+    if (newHeight !== oldHeight) {
+        if (container.sensorData.waterHeight > newHeight) {
+            // Si la altura del agua excede la nueva altura del tanque, ajustarla
+            container.sensorData.waterHeight = newHeight;
+            showNotification(`Altura del agua ajustada a ${newHeight}cm en ${container.name}`, 'warning');
+        }
+    }
+    
+    // Recalcular el nivel de agua con las nuevas dimensiones
+    updateContainerDisplay(container);
+    
+    // Mostrar notificación de cambio
+    const dimensionChanged = (newHeight !== oldHeight || newWidth !== oldWidth || newLength !== oldLength);
+    if (dimensionChanged) {
+        const newVolume = Math.round((newHeight * newWidth * newLength) / 1000 * 10) / 10;
+        const oldVolume = Math.round((oldHeight * oldWidth * oldLength) / 1000 * 10) / 10;
+        showNotification(`${container.name}: Volumen ${oldVolume}L → ${newVolume}L`, 'success');
+    }
+    
     saveUserData();
 }
 
+// Función para abrir modal de agregar contenedor
+function openAddContainerModal() {
+    const addContainerModal = document.createElement('div');
+    addContainerModal.className = 'modal';
+    addContainerModal.id = 'add-container-modal';
+    addContainerModal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>💧 Agregar Nuevo Contenedor</h2>
+            </div>
+            <form id="add-container-form">
+                <div class="form-group">
+                    <label for="container-name">Nombre del contenedor:</label>
+                    <input type="text" id="container-name" name="containerName" required placeholder="Ej: Tanque Secundario, Depósito, etc.">
+                </div>
+                <div class="form-group">
+                    <label for="container-height">Altura (cm):</label>
+                    <input type="number" id="container-height" name="containerHeight" required min="1" value="50">
+                </div>
+                <div class="form-group">
+                    <label for="container-width">Ancho (cm):</label>
+                    <input type="number" id="container-width" name="containerWidth" required min="1" value="30">
+                </div>
+                <div class="form-group">
+                    <label for="container-length">Largo (cm):</label>
+                    <input type="number" id="container-length" name="containerLength" required min="1" value="40">
+                </div>
+                <div class="form-group">
+                    <label for="initial-water-height">Altura inicial del agua (cm):</label>
+                    <input type="number" id="initial-water-height" name="initialWaterHeight" required min="0" value="25">
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddContainerModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Agregar Contenedor</button>
+                </div>
+            </form>
+        </div>
+    `;
+    
+    document.body.appendChild(addContainerModal);
+    addContainerModal.classList.add('show');
+    document.getElementById('container-name').focus();
+    
+    // Manejar envío del formulario
+    document.getElementById('add-container-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        addContainer();
+    });
+}
+
+function closeAddContainerModal() {
+    const addContainerModal = document.getElementById('add-container-modal');
+    if (addContainerModal) {
+        addContainerModal.classList.remove('show');
+        setTimeout(() => {
+            if (document.body.contains(addContainerModal)) {
+                document.body.removeChild(addContainerModal);
+            }
+        }, 300);
+    }
+}
+
 function addContainer() {
-    const containerCount = document.querySelectorAll('.water-container').length;
-    showNotification(`Contenedor ${containerCount + 1} agregado. (Funcionalidad en desarrollo)`);
+    const containerName = document.getElementById('container-name').value.trim();
+    const height = parseInt(document.getElementById('container-height').value) || 50;
+    const width = parseInt(document.getElementById('container-width').value) || 30;
+    const length = parseInt(document.getElementById('container-length').value) || 40;
+    const initialWaterHeight = parseInt(document.getElementById('initial-water-height').value) || 25;
+    
+    if (!containerName) {
+        showNotification('Por favor ingresa un nombre para el contenedor', 'error');
+        return;
+    }
+    
+    if (height <= 0 || width <= 0 || length <= 0) {
+        showNotification('Las dimensiones deben ser valores positivos', 'error');
+        return;
+    }
+    
+    if (initialWaterHeight < 0 || initialWaterHeight > height) {
+        showNotification('La altura inicial del agua debe estar entre 0 y la altura del contenedor', 'error');
+        return;
+    }
+    
+    // Crear nuevo contenedor
+    const newContainer = {
+        id: Date.now(),
+        name: containerName,
+        height: height,
+        width: width,
+        length: length,
+        sensorData: {
+            waterHeight: Math.min(initialWaterHeight, height),
+            lastUpdate: new Date().toISOString()
+        },
+        waterLevel: 0 // Se calculará automáticamente
+    };
+    
+    // Agregar al array de contenedores
+    waterContainers.push(newContainer);
+    
+    // Actualizar la interfaz
+    updateWaterContent();
+    closeAddContainerModal();
+    saveUserData();
+    
+    showNotification(`Contenedor "${containerName}" agregado exitosamente`, 'success');
+}
+
+function editContainer(containerId) {
+    const container = waterContainers.find(c => c.id === containerId);
+    if (!container) return;
+    
+    const editContainerModal = document.createElement('div');
+    editContainerModal.className = 'modal';
+    editContainerModal.id = 'edit-container-modal';
+    editContainerModal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>✏️ Editar Contenedor</h2>
+            </div>
+            <form id="edit-container-form">
+                <div class="form-group">
+                    <label for="edit-container-name">Nombre del contenedor:</label>
+                    <input type="text" id="edit-container-name" name="containerName" required value="${container.name}">
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditContainerModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    `;
+    
+    document.body.appendChild(editContainerModal);
+    editContainerModal.classList.add('show');
+    document.getElementById('edit-container-name').focus();
+    
+    // Manejar envío del formulario
+    document.getElementById('edit-container-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const newName = document.getElementById('edit-container-name').value.trim();
+        if (newName && newName !== container.name) {
+            container.name = newName;
+            updateWaterContent();
+            saveUserData();
+            showNotification('Contenedor actualizado exitosamente', 'success');
+            closeEditContainerModal();
+        }
+    });
+}
+
+function closeEditContainerModal() {
+    const editContainerModal = document.getElementById('edit-container-modal');
+    if (editContainerModal) {
+        editContainerModal.classList.remove('show');
+        setTimeout(() => {
+            if (document.body.contains(editContainerModal)) {
+                document.body.removeChild(editContainerModal);
+            }
+        }, 300);
+    }
+}
+
+function deleteContainer(containerId) {
+    const container = waterContainers.find(c => c.id === containerId);
+    if (!container) return;
+    
+    if (waterContainers.length <= 1) {
+        showNotification('No puedes eliminar el último contenedor', 'error');
+        return;
+    }
+    
+    if (confirm(`¿Estás seguro de que quieres eliminar el contenedor "${container.name}"?`)) {
+        waterContainers = waterContainers.filter(c => c.id !== containerId);
+        updateWaterContent();
+        saveUserData();
+        showNotification('Contenedor eliminado exitosamente', 'success');
+    }
 }
 
 function checkLeak() {
@@ -558,9 +923,15 @@ function checkLeak() {
 }
 
 function simulateWaterLevelChange() {
-    // Simular cambios naturales en el nivel de agua
-    const change = (Math.random() - 0.5) * 10; // Cambio entre -5% y +5%
-    waterLevel = Math.max(0, Math.min(100, waterLevel + change));
+    // Simular cambios naturales en el nivel de agua basados en datos del sensor
+    const change = (Math.random() - 0.5) * 2; // Cambio más sutil entre -1% y +1%
+    const newHeight = Math.max(0, Math.min(tankHeight, sensorData.waterHeight + change));
+    
+    // Actualizar datos del sensor con variación natural
+    sensorData.waterHeight = Math.round(newHeight * 10) / 10;
+    sensorData.lastUpdate = new Date().toISOString();
+    
+    // Recalcular el nivel basado en las nuevas dimensiones
     updateWaterLevel();
     saveUserData();
 }
@@ -611,9 +982,16 @@ function loadUserData() {
         const data = JSON.parse(savedData);
         currentUser = data.user || 'Usuario';
         plants = data.plants || [];
-        waterLevel = data.waterLevel || 75;
-        tankHeight = data.tankHeight || 50;
-        tankWidth = data.tankWidth || 30;
+        
+        // Cargar contenedores de agua si existen
+        if (data.waterContainers && data.waterContainers.length > 0) {
+            waterContainers = data.waterContainers;
+        }
+        
+        // Validar datos de todos los contenedores después de cargarlos
+        waterContainers.forEach(container => {
+            validateContainerSensorData(container);
+        });
         
         // Actualizar display
         updatePlantsDisplay();
@@ -632,9 +1010,7 @@ function saveUserData() {
     const data = {
         user: currentUser,
         plants: plants,
-        waterLevel: waterLevel,
-        tankHeight: tankHeight,
-        tankWidth: tankWidth,
+        waterContainers: waterContainers,
         lastUpdated: new Date().toISOString()
     };
     
@@ -656,6 +1032,80 @@ function updateWaterLevelFromSensor(newLevel) {
     waterLevel = Math.max(0, Math.min(100, newLevel));
     updateWaterLevel();
     saveUserData();
+}
+
+// Función para validar y ajustar datos del sensor de un contenedor específico
+function validateContainerSensorData(container) {
+    // Asegurar que la altura del agua no exceda la altura del tanque
+    if (container.sensorData.waterHeight > container.height) {
+        container.sensorData.waterHeight = container.height;
+        console.log(`Altura del agua ajustada a la altura máxima del tanque en ${container.name}:`, container.height);
+    }
+    
+    // Asegurar que la altura del agua no sea negativa
+    if (container.sensorData.waterHeight < 0) {
+        container.sensorData.waterHeight = 0;
+        console.log(`Altura del agua ajustada a 0 en ${container.name}`);
+    }
+    
+    return container.sensorData;
+}
+
+// Función para simular datos del sensor de un contenedor específico
+function simulateContainerSensorData(containerId) {
+    const container = waterContainers.find(c => c.id === containerId);
+    if (!container) return;
+    
+    // Validar datos actuales antes de simular
+    validateContainerSensorData(container);
+    
+    // Simular variaciones realistas en la altura del agua (respetando las dimensiones del tanque)
+    const variation = (Math.random() - 0.5) * 5; // Variación de ±2.5 cm
+    const newHeight = Math.max(0, Math.min(container.height, container.sensorData.waterHeight + variation));
+    
+    // Actualizar datos del sensor
+    container.sensorData.waterHeight = Math.round(newHeight * 10) / 10;
+    container.sensorData.lastUpdate = new Date().toISOString();
+    
+    // Recalcular y actualizar la visualización
+    updateContainerDisplay(container);
+    saveUserData();
+    
+    showNotification(`Datos del sensor actualizados en ${container.name}`, 'success');
+}
+
+// Función para actualizar datos del sensor de un contenedor específico
+function updateContainerSensorData(containerId) {
+    const container = waterContainers.find(c => c.id === containerId);
+    if (!container) return;
+    
+    // Esta función se puede usar para recibir datos reales del sensor
+    // Por ahora, simula una actualización
+    simulateContainerSensorData(containerId);
+}
+
+// Función para recibir datos reales del sensor (API externa)
+function receiveSensorData(data) {
+    if (data && typeof data === 'object') {
+        // Actualizar datos del sensor con validación
+        if (data.waterHeight !== undefined) {
+            sensorData.waterHeight = Math.max(0, Math.min(tankHeight, data.waterHeight));
+        }
+        sensorData.lastUpdate = new Date().toISOString();
+        
+        // Validar todos los datos del sensor
+        validateSensorData();
+        
+        // Recalcular y actualizar
+        updateWaterLevel();
+        saveUserData();
+        
+        console.log('Datos del sensor recibidos y validados:', sensorData);
+        showNotification('Datos del sensor actualizados desde fuente externa', 'success');
+    } else {
+        console.error('Datos del sensor inválidos:', data);
+        showNotification('Error: Datos del sensor inválidos', 'error');
+    }
 }
 
 // Agregar estilos CSS para las animaciones de notificaciones
