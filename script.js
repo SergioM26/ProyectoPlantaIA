@@ -498,25 +498,36 @@ function addPlant() {
         return;
     }
     
-    // Funcionalidad de foto desactivada - agregar planta sin foto
-    savePlant(plantName, null);
+    // Guardar en backend
+    savePlantBackend(plantName);
 }
 
-function savePlant(name, photo) {
-    const newPlant = {
-        id: Date.now(),
-        name: name,
-        photo: photo,
-        dateAdded: new Date().toLocaleDateString()
-    };
-    
-    plants.push(newPlant);
-    updatePlantsDisplay();
-    closeModal();
-    saveUserData();
-    
-    // Mostrar mensaje de éxito
-    showNotification(`¡Planta "${name}" agregada exitosamente!`);
+async function savePlantBackend(name) {
+	try {
+		const resp = await fetch('api/plantas_create.php', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			credentials: 'include',
+			body: JSON.stringify({ nickname: name, plant_name: name, scientific_name: '' })
+		});
+		const data = await resp.json();
+		if (!resp.ok) throw new Error(data.message || 'Error al guardar la planta');
+		const newPlant = {
+			id: data.id,
+			name: data.nombre,
+			tipo_de_planta: data.tipo_de_planta || name,
+			photo: null,
+			dateAdded: data.fecha_cuidado
+		};
+		plants.unshift(newPlant);
+		updatePlantsDisplay();
+		closeModal();
+		saveUserData();
+		showNotification(`¡Planta "${newPlant.name}" agregada exitosamente!`, 'success');
+	} catch (e) {
+		console.error(e);
+		showNotification('No se pudo guardar la planta', 'error');
+	}
 }
 
 function updatePlantsDisplay() {
