@@ -548,10 +548,48 @@ function updatePlantsDisplay() {
     `).join('');
 }
 
+// NUEVA Y MEJORADA FUNCIÓN para ver los detalles de la planta
 function viewPlantDetails(plantId) {
+    // Buscamos la planta en nuestro array por su ID
     const plant = plants.find(p => p.id === plantId);
-    if (plant) {
-        alert(`Planta: ${plant.name}\nAgregada: ${plant.dateAdded}`);
+
+    if (!plant) {
+        console.error("No se encontró la planta con ID:", plantId);
+        return;
+    }
+
+    // Creamos el HTML para nuestra ventana modal
+    const modalHTML = `
+        <div class="modal show" id="details-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>🌿 Detalles de la Planta</h2>
+                </div>
+                <div class="modal-body">
+                    <div class="plant-details-image">
+                        <span style="font-size: 80px;">🌱</span>
+                    </div>
+                    <h3>${plant.name}</h3>
+                    <p><strong>Tipo:</strong> ${plant.tipo_de_planta || 'No especificado'}</p>
+                    <p><strong>Fecha de Cuidado:</strong> ${plant.dateAdded || 'No especificada'}</p>
+                    
+                    </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn btn-primary" onclick="closeDetailsModal()">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Añadimos la ventana modal al cuerpo del documento
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+// Función para cerrar nuestra nueva ventana modal
+function closeDetailsModal() {
+    const modal = document.getElementById('details-modal');
+    if (modal) {
+        modal.remove(); // Elimina la ventana del DOM
     }
 }
 
@@ -779,6 +817,7 @@ function loadUserData() {
 			plants = (data.plants || []).map(p => ({
 				id: p.id,
 				name: p.nombre,
+				tipo_de_planta: p.tipo_de_planta,
 				photo: null,
 				dateAdded: p.fecha_cuidado
 			}));

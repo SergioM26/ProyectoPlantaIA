@@ -11,6 +11,7 @@
   --sombra: rgba(0, 0, 0, 0.1);
 }
 
+
 * {
   margin: 0;
   padding: 0;
@@ -137,6 +138,17 @@ body {
   justify-content: center;
   color: var(--verde-natural);
   font-size: 2rem;
+}
+
+.plant-humidity-label {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 12px;
 }
 
 .plant-name {
@@ -605,4 +617,38 @@ body {
   .photo-text {
     font-size: 0.8rem;
   }
+}
+/* --- Estilos para la Ventana Modal de Detalles --- */
+
+.modal.show {
+  display: flex; /* Usamos flex para centrar el contenido */
+}
+
+.modal-body {
+  padding: 20px;
+  text-align: center;
+}
+
+.modal-body h3 {
+  margin-top: 10px;
+  margin-bottom: 15px;
+  color: var(--verde-oscuro);
+}
+
+.modal-body p {
+  margin: 5px 0;
+  color: var(--texto);
+}
+
+.plant-details-image {
+  width: 120px;
+  height: 120px;
+  background-color: #f0f0f0;
+  border-radius: 50%; /* Círculo */
+  margin: 0 auto 15px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 60px;
+  color: var(--verde-natural);
 }
