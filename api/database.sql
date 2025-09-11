@@ -31,3 +31,13 @@ CREATE TABLE IF NOT EXISTS `Plantas` (
 	INDEX (`tanque_id`),
 	CONSTRAINT `fk_plantas_tanque` FOREIGN KEY (`tanque_id`) REFERENCES `Tanques`(`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci; 
+
+ALTER TABLE Plantas
+ADD COLUMN id_usuario INT
+
+ALTER TABLE Plantas
+ADD CONSTRAINT fk_plantas_usuario
+FOREIGN KEY (id_usuario)
+REFERENCES Usuarios(id)
+ON DELETE CASCADE
+ON UPDATE CASCADE
