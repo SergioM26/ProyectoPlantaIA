@@ -105,7 +105,7 @@ function createWaterContent() {
     return `
         <div class="water-containers-grid">
             ${waterContainers.map(container => createContainerCard(container)).join('')}
-            </div>
+        </div>
         
         <div class="container-actions">
             <button class="add-container-btn" onclick="openAddContainerModal()">
@@ -178,7 +178,7 @@ function createContainerCard(container) {
                 <h4>🔧 Control del Sensor</h4>
                 <button class="btn btn-secondary" onclick="simulateContainerSensorData(${container.id})">
                     📡 Simular Datos
-            </button>
+                </button>
                 <button class="btn btn-primary" onclick="updateContainerSensorData(${container.id})">
                     🔄 Actualizar
                 </button>
