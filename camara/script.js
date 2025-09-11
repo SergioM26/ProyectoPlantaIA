@@ -611,30 +611,34 @@ function showPokemonModal() {
 
 // Confirmar plantación
 function confirmPlanting() {
-    const nickname = plantNickname.value.trim();
-    
-    if (!nickname) {
-        alert('Por favor, ingresa un nombre para tu planta');
-        return;
-    }
-    
-    // Aquí guardarías la planta en tu base de datos
-    const plantToSave = {
-        ...currentPlantData,
-        nickname: nickname,
-        datePlanted: new Date().toISOString(),
-        id: Date.now() // ID único simple
-    };
-    
-    // Simular guardado (en producción esto sería una llamada al backend)
-    console.log('Planta guardada:', plantToSave);
-    
-    // Mostrar mensaje de éxito
-    alert(`¡Felicidades! Has plantado "${nickname}" exitosamente.`);
-    
-    // Cerrar modal y volver a la cámara
-    pokemonModal.style.display = 'none';
-    resetToCamera();
+	const nickname = plantNickname.value.trim();
+	
+	if (!nickname) {
+		alert('Por favor, ingresa un nombre para tu planta');
+		return;
+	}
+	
+	const plantToSave = {
+		nickname: nickname,
+		plant_name: currentPlantData?.plant_name || '',
+		scientific_name: currentPlantData?.scientific_name || ''
+	};
+	
+	fetch('../api/plantas_create.php', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		credentials: 'include',
+		body: JSON.stringify(plantToSave)
+	})
+		.then(async (resp) => {
+			const data = await resp.json();
+			if (!resp.ok) throw new Error(data.message || 'Error al guardar la planta');
+			alert(`¡Felicidades! Has plantado "${nickname}" exitosamente.`);
+			window.location.href = '../Plantas.html';
+		})
+		.catch((err) => {
+			alert(err.message);
+		});
 }
 
 // Tomar otra foto

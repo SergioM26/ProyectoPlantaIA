@@ -612,16 +612,57 @@
 
         // Manejar envío de formularios
         document.querySelectorAll('form').forEach(form => {
-            form.addEventListener('submit', function(e) {
+            form.addEventListener('submit', async function(e) {
                 e.preventDefault();
-                // Aquí puedes agregar la lógica para procesar el formulario
-                alert('Formulario enviado correctamente');
+
+                const isLogin = this.parentElement.id === 'loginForm';
+                try {
+                    if (isLogin) {
+                        const email = document.getElementById('loginEmail').value.trim();
+                        const password = document.getElementById('loginPassword').value;
+                        const resp = await fetch('api/login.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ email, password })
+                        });
+                        const data = await resp.json();
+                        if (!resp.ok) throw new Error(data.message || 'Error al iniciar sesión');
+                        localStorage.setItem('plantaia_user', JSON.stringify(data.user));
+                        window.location.href = 'Plantas.html';
+                    } else {
+                        const name = document.getElementById('registerName').value.trim();
+                        const email = document.getElementById('registerEmail').value.trim();
+                        const password = document.getElementById('registerPassword').value;
+                        const confirm = document.getElementById('confirmPassword').value;
+                        if (password !== confirm) throw new Error('Las contraseñas no coinciden');
+                        const resp = await fetch('api/register.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ name, email, password })
+                        });
+                        const data = await resp.json();
+                        if (!resp.ok) throw new Error(data.message || 'Error al registrar');
+                        localStorage.setItem('plantaia_user', JSON.stringify(data.user));
+                        window.location.href = 'Plantas.html';
+                    }
+                } catch (err) {
+                    alert(err.message);
+                }
             });
         });
 
         // Mejorar experiencia táctil en móviles
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Página cargada correctamente');
+            
+            // Si ya hay sesión, ir directo a Plantas.html
+            try {
+                const user = localStorage.getItem('plantaia_user');
+                if (user) {
+                    window.location.href = 'Plantas.html';
+                    return;
+                }
+            } catch (_) {}
             
             // Prevenir doble tap zoom en botones
             document.querySelectorAll('.btn, .form-btn, .back-btn').forEach(button => {

@@ -6,6 +6,25 @@ let tankHeight = 50; // Altura del tanque en cm
 let tankWidth = 30; // Ancho del tanque en cm
 let hasLeak = false; // Estado de fuga
 
+// Redirección si no hay sesión
+(function enforceAuth() {
+	try {
+		fetch('api/me.php', { credentials: 'include' })
+			.then(async (resp) => {
+				if (!resp.ok) throw new Error('noauth');
+				const data = await resp.json();
+				const user = data.user;
+				localStorage.setItem('plantaia_user', JSON.stringify(user));
+				currentUser = user.name || 'Usuario';
+			})
+			.catch(() => {
+				window.location.href = 'index.html';
+			});
+	} catch (_) {
+		window.location.href = 'index.html';
+	}
+})();
+
 // Elementos del DOM
 let currentTab = 'plants';
 let modal = null;
@@ -212,8 +231,7 @@ function showTab(tabName) {
 }
 
 function openAddPlantModal() {
-    modal.classList.add('show');
-    document.getElementById('plant-name').focus();
+	window.location.href = 'camara/index.html';
 }
 
 function openEditPlantModal(plant) {
@@ -605,26 +623,35 @@ function showNotification(message, type = 'info') {
 }
 
 function loadUserData() {
-    // Cargar datos del usuario desde localStorage
-    const savedData = localStorage.getItem('gardenAppData');
-    if (savedData) {
-        const data = JSON.parse(savedData);
-        currentUser = data.user || 'Usuario';
-        plants = data.plants || [];
-        waterLevel = data.waterLevel || 75;
-        tankHeight = data.tankHeight || 50;
-        tankWidth = data.tankWidth || 30;
-        
-        // Actualizar display
-        updatePlantsDisplay();
-        updateWaterLevel();
-        
-        // Actualizar nombre de usuario en header
-        const userNameElement = document.querySelector('.user-name');
-        if (userNameElement) {
-            userNameElement.textContent = `Bienvenido ${currentUser}`;
-        }
-    }
+	// Cargar nombre del usuario desde localStorage (lo establece api/me.php en la carga de la app)
+	const userStr = localStorage.getItem('plantaia_user');
+	if (userStr) {
+		try {
+			const user = JSON.parse(userStr);
+			currentUser = user.name || 'Usuario';
+			const userNameElement = document.querySelector('.user-name');
+			if (userNameElement) {
+				userNameElement.textContent = `Bienvenido ${currentUser}`;
+			}
+		} catch (_) {}
+	}
+	
+	// Cargar plantas desde el backend
+	fetch('api/plantas_list.php', { credentials: 'include' })
+		.then(async (resp) => {
+			const data = await resp.json();
+			if (!resp.ok) throw new Error(data.message || 'Error al cargar plantas');
+			plants = (data.plants || []).map(p => ({
+				id: p.id,
+				name: p.nombre,
+				photo: null,
+				dateAdded: p.fecha_cuidado
+			}));
+			updatePlantsDisplay();
+		})
+		.catch((err) => {
+			console.error(err);
+		});
 }
 
 function saveUserData() {

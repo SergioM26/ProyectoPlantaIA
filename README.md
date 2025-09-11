@@ -160,3 +160,33 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo LICENSE para más detal
 
 - [Plant.id](https://web.plant.id/) por la API de identificación de plantas
 - Comunidad de desarrolladores web por las inspiraciones de diseño
+
+# PlantaIA
+
+## Backend de autenticación (mínimo)
+
+Se agregó un backend simple con Node/Express y SQLite para manejar registro y login.
+
+### Requisitos
+- Node.js 18+
+
+### Iniciar backend
+```bash
+cd server
+npm install
+npm run start
+```
+El backend corre en `http://localhost:3001`.
+
+### Endpoints
+- POST `/api/register` { name, email, password }
+- POST `/api/login` { email, password }
+- GET `/api/me` con header `Authorization: Bearer <token>`
+
+### Frontend
+- Abrir `index.html` (usa el `iniciar-servidor.sh` o cualquier servidor estático)
+- Completar registro o login
+- Al éxito redirige a `Plantas.html` y guarda el token en `localStorage`
+
+### Cerrar sesión
+- Borrar `localStorage` keys: `plantaia_token` y `plantaia_user`.
