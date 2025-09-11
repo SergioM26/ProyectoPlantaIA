@@ -401,12 +401,68 @@ body {
 }
 
 /* Sección Mi Agua */
-.water-container {
+.water-containers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 25px;
+  margin-bottom: 25px;
+}
+
+.water-container-card {
   background: var(--blanco);
   border-radius: 20px;
   padding: 25px;
   box-shadow: 0 4px 15px var(--sombra);
-  margin-bottom: 25px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.water-container-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px var(--sombra);
+}
+
+.container-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.container-header h3 {
+  color: var(--verde-natural);
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.container-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.container-actions .action-btn {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 5px;
+  transition: all 0.3s ease;
+}
+
+.container-actions .edit-btn:hover {
+  background: var(--verde-claro);
+  transform: scale(1.1);
+}
+
+.container-actions .delete-btn:hover {
+  background: #ffebee;
+  transform: scale(1.1);
+}
+
+.container-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
 }
 
 .water-tank {
@@ -451,11 +507,102 @@ body {
   margin-bottom: 10px;
 }
 
+.sensor-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.sensor-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ccc;
+  transition: background-color 0.3s ease;
+}
+
+.sensor-indicator.active {
+  background: #4CAF50;
+  box-shadow: 0 0 8px rgba(76, 175, 80, 0.5);
+}
+
+.sensor-indicator.inactive {
+  background: #f44336;
+}
+
+.sensor-text {
+  font-size: 0.9rem;
+  color: var(--texto-claro);
+  font-weight: 500;
+}
+
+.water-details {
+  background: var(--beige-suave);
+  border-radius: 15px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid var(--verde-claro);
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(56, 142, 60, 0.1);
+}
+
+.detail-item:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-weight: 500;
+  color: var(--texto-oscuro);
+  font-size: 0.95rem;
+}
+
+.detail-value {
+  font-weight: 600;
+  color: var(--verde-natural);
+  font-size: 0.95rem;
+}
+
+.water-data h4 {
+  color: var(--verde-natural);
+  margin-bottom: 15px;
+  text-align: center;
+  font-size: 1.1rem;
+}
+
 .water-data {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 15px;
   margin-bottom: 20px;
+}
+
+.sensor-controls {
+  background: var(--beige-suave);
+  border-radius: 15px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid var(--verde-claro);
+}
+
+.sensor-controls h4 {
+  color: var(--verde-natural);
+  margin-bottom: 15px;
+  text-align: center;
+  font-size: 1.1rem;
+}
+
+.sensor-controls .btn {
+  margin: 5px;
+  padding: 10px 15px;
+  font-size: 0.9rem;
 }
 
 .data-item {
@@ -563,8 +710,46 @@ body {
     height: 200px;
   }
   
+  .water-containers-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .water-container-card {
+    padding: 20px;
+  }
+  
+  .container-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .container-actions {
+    align-self: flex-end;
+  }
+  
   .water-data {
     grid-template-columns: 1fr;
+  }
+  
+  .water-details {
+    padding: 15px;
+  }
+  
+  .detail-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+  
+  .sensor-controls {
+    padding: 15px;
+  }
+  
+  .sensor-controls .btn {
+    width: 100%;
+    margin: 5px 0;
   }
   
   .photo-options {
