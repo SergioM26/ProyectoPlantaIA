@@ -37,11 +37,12 @@ let currentPlantData = null;
 let cameraPermissionGranted = false;
 let availableCameras = [];
 let selectedCameraId = null;
+let currentMode = null; // "mobile" o "desktop"
 
 // Inicialización
 document.addEventListener('DOMContentLoaded', function() {
     checkEnvironment();
-    checkCameraSupport();
+    switchCameraMode();
     setupEventListeners();
 });
 
@@ -136,16 +137,96 @@ function showEnvironmentError(type) {
     document.body.appendChild(errorDiv);
 }
 
-// Verificar soporte de cámara
+// Verificar soporte de cámara (solo para desktop)
 function checkCameraSupport() {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         showError('Tu navegador no soporta el acceso a la cámara. Por favor, usa un navegador más moderno como Chrome, Firefox o Safari.');
         return;
     }
     
-    // Mostrar mensaje de permisos y obtener cámaras
+    // En desktop: primero mostrar mensaje de permisos
     showPermissionMessage();
-    getAvailableCameras();
+}
+
+// Mostrar mensaje de permisos inicial (solo desktop)
+function showPermissionMessage() {
+    const permissionDiv = document.createElement('div');
+    permissionDiv.id = 'permissionMessage';
+    permissionDiv.style.cssText = `
+        background: linear-gradient(45deg, #FFD54F, #FFF176);
+        padding: 20px;
+        border-radius: 15px;
+        margin: 20px 0;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border-left: 5px solid #FBC02D;
+    `;
+    
+    permissionDiv.innerHTML = `
+        <h3 style="margin: 0 0 10px 0; color: #E65100;">📷 Permisos de Cámara Requeridos</h3>
+        <p style="margin: 0 0 15px 0; color: #BF360C;">
+            Para identificar plantas, necesitamos acceso a tu cámara. 
+            Haz clic en "Solicitar Permisos" y permite el acceso cuando tu navegador te lo solicite.
+        </p>
+        <div style="background: #FFF8E1; padding: 15px; border-radius: 10px; margin: 15px 0; text-align: left;">
+            <strong>💡 Consejos para mejores resultados:</strong>
+            <ul style="margin: 10px 0; padding-left: 20px;">
+                <li>Usa buena iluminación</li>
+                <li>Enfoca bien la planta</li>
+                <li>Incluye hojas, flores o frutos</li>
+                <li>Evita sombras fuertes</li>
+            </ul>
+        </div>
+        <button id="requestPermissionBtn" class="btn btn-primary pulse" style="margin: 0;">
+            🔐 Solicitar Permisos de Cámara
+        </button>
+    `;
+    
+    cameraSection.insertBefore(permissionDiv, cameraSection.firstChild);
+    
+    // Event listener para solicitar permisos
+    document.getElementById('requestPermissionBtn').addEventListener('click', requestCameraPermission);
+}
+
+// Solicitar permisos de cámara y obtener cámaras disponibles
+async function requestCameraPermission() {
+    try {
+        const requestBtn = document.getElementById('requestPermissionBtn');
+        if (requestBtn) {
+            requestBtn.textContent = '🔄 Solicitando permisos...';
+            requestBtn.disabled = true;
+        }
+        
+        // Solicitar permisos básicos primero
+        const tempStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        
+        // Cerrar el stream temporal inmediatamente
+        tempStream.getTracks().forEach(track => track.stop());
+        
+        // Ahora obtener las cámaras disponibles
+        await getAvailableCameras();
+        
+    } catch (error) {
+        console.error('Error al solicitar permisos:', error);
+        
+        // Restaurar botón
+        const requestBtn = document.getElementById('requestPermissionBtn');
+        if (requestBtn) {
+            requestBtn.textContent = '🔐 Solicitar Permisos de Cámara';
+            requestBtn.disabled = false;
+        }
+        
+        // Mostrar error específico según el tipo
+        if (error.name === 'NotAllowedError') {
+            showError('❌ Permisos denegados. Por favor, permite el acceso a la cámara en la configuración de tu navegador y recarga la página.');
+        } else if (error.name === 'NotFoundError') {
+            showError('❌ No se encontró ninguna cámara. Por favor, conecta una cámara y recarga la página.');
+        } else if (error.name === 'NotReadableError') {
+            showError('❌ La cámara está siendo usada por otra aplicación. Por favor, cierra otras aplicaciones que usen la cámara y recarga la página.');
+        } else {
+            showError('❌ Error al acceder a la cámara: ' + error.message + '. Por favor, recarga la página.');
+        }
+    }
 }
 
 // Obtener cámaras disponibles
@@ -159,7 +240,12 @@ async function getAvailableCameras() {
             return;
         }
         
-        // Mostrar selector de cámaras
+        // Ocultar mensaje de permisos y mostrar selector de cámaras
+        const permissionMessage = document.getElementById('permissionMessage');
+        if (permissionMessage) {
+            permissionMessage.style.display = 'none';
+        }
+        
         showCameraSelector();
         
     } catch (error) {
@@ -168,18 +254,18 @@ async function getAvailableCameras() {
     }
 }
 
-// Mostrar selector de cámaras
+// Mostrar selector de cámaras (solo después de obtener permisos)
 function showCameraSelector() {
-    const permissionDiv = document.createElement('div');
-    permissionDiv.id = 'permissionMessage';
-    permissionDiv.style.cssText = `
-        background: linear-gradient(45deg, #FFD54F, #FFF176);
+    const cameraDiv = document.createElement('div');
+    cameraDiv.id = 'cameraSelector';
+    cameraDiv.style.cssText = `
+        background: linear-gradient(45deg, #E8F5E8, #F1F8E9);
         padding: 20px;
         border-radius: 15px;
         margin: 20px 0;
         text-align: center;
         box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        border-left: 5px solid #FBC02D;
+        border-left: 5px solid #4CAF50;
     `;
     
     let cameraOptions = '';
@@ -194,7 +280,7 @@ function showCameraSelector() {
         
         let icon = '📷';
         if (isBackCamera) icon = '📱';
-        else if (isFrontCamera) icon = '��';
+        else if (isFrontCamera) icon = '🤳';
         
         cameraOptions += `
             <div class="camera-option" data-device-id="${camera.deviceId}" style="
@@ -222,22 +308,12 @@ function showCameraSelector() {
         `;
     });
     
-    permissionDiv.innerHTML = `
-        <h3 style="margin: 0 0 10px 0; color: #E65100;">📷 Selecciona tu Cámara</h3>
-        <p style="margin: 0 0 15px 0; color: #BF360C;">
+    cameraDiv.innerHTML = `
+        <h3 style="margin: 0 0 10px 0; color: #2E7D32;">📷 ¡Permisos Concedidos! Selecciona tu Cámara</h3>
+        <p style="margin: 0 0 15px 0; color: #388E3C;">
             Elige la cámara que quieres usar para identificar plantas. 
             La cámara trasera suele dar mejores resultados.
         </p>
-        
-        <div style="background: #FFF8E1; padding: 15px; border-radius: 10px; margin: 15px 0; text-align: left;">
-            <strong>💡 Consejos para mejores resultados:</strong>
-            <ul style="margin: 10px 0; padding-left: 20px;">
-                <li>Usa la cámara trasera para mejor calidad</li>
-                <li>Usa buena iluminación</li>
-                <li>Enfoca bien la planta</li>
-                <li>Incluye hojas, flores o frutos</li>
-            </ul>
-        </div>
         
         <div id="cameraList" style="max-height: 300px; overflow-y: auto; margin: 20px 0;">
             ${cameraOptions}
@@ -248,7 +324,7 @@ function showCameraSelector() {
         </button>
     `;
     
-    cameraSection.insertBefore(permissionDiv, cameraSection.firstChild);
+    cameraSection.insertBefore(cameraDiv, cameraSection.firstChild);
     
     // Event listeners para las opciones de cámara
     document.querySelectorAll('.camera-option').forEach(option => {
@@ -274,47 +350,10 @@ function showCameraSelector() {
     document.getElementById('activateCameraBtn').addEventListener('click', initializeCamera);
 }
 
-// Mostrar mensaje de permisos (versión simple para cuando no hay múltiples cámaras)
-function showPermissionMessage() {
-    // Solo se ejecuta si no hay cámaras múltiples
-    if (availableCameras.length > 0) return;
-    
-    const permissionDiv = document.createElement('div');
-    permissionDiv.id = 'permissionMessage';
-    permissionDiv.style.cssText = `
-        background: linear-gradient(45deg, #FFD54F, #FFF176);
-        padding: 20px;
-        border-radius: 15px;
-        margin: 20px 0;
-        text-align: center;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        border-left: 5px solid #FBC02D;
-    `;
-    
-    permissionDiv.innerHTML = `
-        <h3 style="margin: 0 0 10px 0; color: #E65100;">📷 Permisos de Cámara Requeridos</h3>
-        <p style="margin: 0 0 15px 0; color: #BF360C;">
-            Para identificar plantas, necesitamos acceso a tu cámara. 
-            Haz clic en "Activar Cámara" y permite el acceso cuando tu navegador te lo solicite.
-        </p>
-        <div style="background: #FFF8E1; padding: 15px; border-radius: 10px; margin: 15px 0; text-align: left;">
-            <strong>💡 Consejos para mejores resultados:</strong>
-            <ul style="margin: 10px 0; padding-left: 20px;">
-                <li>Usa buena iluminación</li>
-                <li>Enfoca bien la planta</li>
-                <li>Incluye hojas, flores o frutos</li>
-                <li>Evita sombras fuertes</li>
-            </ul>
-        </div>
-        <button id="activateCameraBtn" class="btn btn-primary pulse" style="margin: 0;">
-            📸 Activar Cámara
-        </button>
-    `;
-    
-    cameraSection.insertBefore(permissionDiv, cameraSection.firstChild);
-    
-    // Event listener para el botón
-    document.getElementById('activateCameraBtn').addEventListener('click', initializeCamera);
+// Detección de móvil o pantalla pequeña
+function isMobileOrSmallScreen() {
+    return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|Mobile/i.test(navigator.userAgent) ||
+           window.innerWidth < 700;
 }
 
 // Configurar event listeners
@@ -327,13 +366,13 @@ function setupEventListeners() {
     retryBtn.addEventListener('click', resetToCamera);
 }
 
-// Inicializar cámara
+// Inicializar cámara (solo después de seleccionar)
 async function initializeCamera() {
     try {
         // Mostrar indicador de carga
         const activateBtn = document.getElementById('activateCameraBtn');
         if (activateBtn) {
-            activateBtn.textContent = '🔄 Solicitando permisos...';
+            activateBtn.textContent = '🔄 Iniciando cámara...';
             activateBtn.disabled = true;
         }
         
@@ -342,26 +381,21 @@ async function initializeCamera() {
             video: {
                 width: { ideal: 1280 },
                 height: { ideal: 720 },
-                facingMode: 'environment' // Cámara trasera por defecto
+                deviceId: { exact: selectedCameraId }
             }
         };
         
-        // Si se seleccionó una cámara específica, usarla
-        if (selectedCameraId) {
-            constraints.video.deviceId = { exact: selectedCameraId };
-        }
-        
-        // Solicitar permisos de cámara
+        // Inicializar stream de cámara
         stream = await navigator.mediaDevices.getUserMedia(constraints);
         
         // Configurar video
         video.srcObject = stream;
         video.play();
         
-        // Ocultar mensaje de permisos y mostrar controles
-        const permissionMessage = document.getElementById('permissionMessage');
-        if (permissionMessage) {
-            permissionMessage.style.display = 'none';
+        // Ocultar selector de cámara
+        const cameraSelector = document.getElementById('cameraSelector');
+        if (cameraSelector) {
+            cameraSelector.style.display = 'none';
         }
         
         // Mostrar controles cuando la cámara esté lista
@@ -380,27 +414,16 @@ async function initializeCamera() {
         });
         
     } catch (error) {
-        console.error('Error al acceder a la cámara:', error);
+        console.error('Error al inicializar cámara:', error);
         
         // Restaurar botón
         const activateBtn = document.getElementById('activateCameraBtn');
         if (activateBtn) {
-            activateBtn.textContent = '📸 Activar Cámara';
+            activateBtn.textContent = '📸 Activar Cámara Seleccionada';
             activateBtn.disabled = false;
         }
         
-        // Mostrar error específico según el tipo
-        if (error.name === 'NotAllowedError') {
-            showError('❌ Permisos denegados. Por favor, permite el acceso a la cámara en la configuración de tu navegador y recarga la página.');
-        } else if (error.name === 'NotFoundError') {
-            showError('❌ No se encontró ninguna cámara. Por favor, conecta una cámara y recarga la página.');
-        } else if (error.name === 'NotReadableError') {
-            showError('❌ La cámara está siendo usada por otra aplicación. Por favor, cierra otras aplicaciones que usen la cámara y recarga la página.');
-        } else if (error.name === 'OverconstrainedError') {
-            showError('❌ La cámara no puede cumplir con los requisitos. Por favor, intenta con otra cámara o recarga la página.');
-        } else {
-            showError('❌ Error al acceder a la cámara: ' + error.message + '. Por favor, recarga la página.');
-        }
+        showError('❌ Error al inicializar la cámara: ' + error.message);
     }
 }
 
@@ -628,8 +651,13 @@ function resetToCamera() {
     currentPlantData = null;
     capturedImage.src = '';
     
-    // Mostrar botón de captura si la cámara está activa
-    if (cameraPermissionGranted) {
+    // Mostrar el input file en móvil o botón de captura en desktop
+    if (currentMode === 'mobile') {
+        const fileInput = document.getElementById('mobileFileInput');
+        if (fileInput) {
+            fileInput.style.display = 'block';
+        }
+    } else if (cameraPermissionGranted) {
         captureBtn.style.display = 'block';
         retakeBtn.style.display = 'none';
     }
@@ -656,6 +684,199 @@ window.addEventListener('beforeunload', function() {
     if (stream) {
         stream.getTracks().forEach(track => track.stop());
     }
+});
+
+// NUEVO: Configuración para input file en móvil (sin pedir permisos)
+async function setupMobileFileInput() {
+    // Oculta el video y controles de cámara tradicionales
+    video.style.display = 'none';
+    captureBtn.style.display = 'none';
+    retakeBtn.style.display = 'none';
+
+    // Crear mensaje para móvil
+    const mobileDiv = document.createElement('div');
+    mobileDiv.id = 'mobileMessage';
+    mobileDiv.style.cssText = `
+        background: linear-gradient(45deg, #E3F2FD, #E8F5E8);
+        padding: 20px;
+        border-radius: 15px;
+        margin: 20px 0;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border-left: 5px solid #2196F3;
+    `;
+    
+    mobileDiv.innerHTML = `
+        <h3 style="margin: 0 0 10px 0; color: #1565C0;">📱 Identificador de Plantas Móvil</h3>
+        <p style="margin: 0 0 15px 0; color: #0277BD;">
+            Selecciona una foto de tu galería o toma una nueva para identificar plantas.
+            ¡Es fácil y rápido!
+        </p>
+        
+        <div style="background: #FFF8E1; padding: 15px; border-radius: 10px; margin: 15px 0; text-align: left;">
+            <strong>💡 Consejos para mejores resultados:</strong>
+            <ul style="margin: 10px 0; padding-left: 20px;">
+                <li>Usa buena iluminación natural</li>
+                <li>Enfoca bien las hojas y flores</li>
+                <li>Evita fondos confusos</li>
+                <li>Incluye diferentes partes de la planta</li>
+            </ul>
+        </div>
+    `;
+
+    cameraSection.insertBefore(mobileDiv, cameraSection.firstChild);
+
+    // Crea el input file si no existe
+    let fileInput = document.getElementById('mobileFileInput');
+    if (!fileInput) {
+        fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = 'image/*';
+        fileInput.capture = 'environment'; // Esto permite tomar foto directamente
+        fileInput.id = 'mobileFileInput';
+        fileInput.style.display = 'none'; // Oculto por defecto
+
+        // Crear botón personalizado
+        const fileButton = document.createElement('button');
+        fileButton.className = 'btn btn-primary pulse';
+        fileButton.style.cssText = `
+            margin: 15px auto;
+            padding: 15px 25px;
+            font-size: 1.1rem;
+            border-radius: 25px;
+            background: linear-gradient(45deg, #2196F3, #21CBF3);
+            border: none;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+        `;
+        fileButton.innerHTML = '📸 Seleccionar o Tomar Foto';
+        
+        // Al hacer clic en el botón, abrir el selector de archivos
+        fileButton.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        cameraSection.appendChild(fileInput);
+        cameraSection.appendChild(fileButton);
+    }
+    
+    fileInput.addEventListener('change', handleMobileFile);
+}
+
+// Procesar imagen seleccionada en móvil
+function handleMobileFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    // Mostrar la imagen capturada
+    const imageUrl = URL.createObjectURL(file);
+    capturedImage.src = imageUrl;
+
+    // Cambiar a vista de carga
+    showLoading();
+
+    // Identificar la planta
+    identifyPlant(file)
+        .then(plantData => {
+            currentPlantData = plantData;
+            showResults(plantData);
+        })
+        .catch(error => {
+            console.error('Error en la identificación:', error);
+            showError('Error al identificar la planta. Por favor, intenta con otra foto.');
+        });
+}
+
+// NUEVO: Cambia entre modos según el tamaño de pantalla
+function switchCameraMode() {
+    if (isMobileOrSmallScreen()) {
+        if (currentMode !== "mobile") {
+            currentMode = "mobile";
+            cleanupDesktopMode();
+            setupMobileFileInput();
+        }
+    } else {
+        if (currentMode !== "desktop") {
+            currentMode = "desktop";
+            cleanupMobileMode();
+            checkCameraSupport();
+        }
+    }
+}
+
+// Limpiar modo desktop al cambiar a móvil
+function cleanupDesktopMode() {
+    // Detener stream si existe
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+        cameraPermissionGranted = false;
+    }
+    
+    // Ocultar controles de cámara
+    video.style.display = 'none';
+    captureBtn.style.display = 'none';
+    retakeBtn.style.display = 'none';
+    
+    // Eliminar mensajes de permisos/selectores
+    const permissionMessage = document.getElementById('permissionMessage');
+    const cameraSelector = document.getElementById('cameraSelector');
+    
+    if (permissionMessage && permissionMessage.parentNode) {
+        permissionMessage.parentNode.removeChild(permissionMessage);
+    }
+    
+    if (cameraSelector && cameraSelector.parentNode) {
+        cameraSelector.parentNode.removeChild(cameraSelector);
+    }
+}
+
+// Limpiar modo móvil al cambiar a desktop
+function cleanupMobileMode() {
+    // Eliminar input file y mensaje móvil
+    const fileInput = document.getElementById('mobileFileInput');
+    const mobileMessage = document.getElementById('mobileMessage');
+    
+    if (fileInput && fileInput.parentNode) {
+        fileInput.parentNode.removeChild(fileInput);
+    }
+    
+    if (mobileMessage && mobileMessage.parentNode) {
+        mobileMessage.parentNode.removeChild(mobileMessage);
+    }
+    
+    // Eliminar botón personalizado de archivo
+    const existingButtons = document.querySelectorAll('button[onclick*="mobileFileInput"]');
+    existingButtons.forEach(btn => {
+        if (btn.parentNode) {
+            btn.parentNode.removeChild(btn);
+        }
+    });
+    
+    // Buscar y eliminar cualquier botón que contenga "Seleccionar o Tomar Foto"
+    const allButtons = document.querySelectorAll('button');
+    allButtons.forEach(btn => {
+        if (btn.textContent.includes('Seleccionar o Tomar Foto') && btn.parentNode) {
+            btn.parentNode.removeChild(btn);
+        }
+    });
+    
+    // Volver a mostrar los controles de cámara
+    video.style.display = '';
+}
+
+// Inicialización actualizada
+document.addEventListener('DOMContentLoaded', function() {
+    checkEnvironment();
+    switchCameraMode();
+    setupEventListeners();
+});
+
+// Escucha cambios de tamaño de pantalla
+window.addEventListener('resize', () => {
+    switchCameraMode();
 });
 
 // Función para simular identificación (para testing sin API key)
