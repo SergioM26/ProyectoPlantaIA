@@ -1,0 +1,646 @@
+/* Variables de colores */
+:root {
+    --verde-natural: #388E3C;
+    --verde-claro: #81C784;
+    --amarillo-semilla: #FBC02D;
+    --marron-tierra: #A1887F;
+    --beige-suave: #FFF8E1;
+    --blanco: #FFFFFF;
+    --gris-oscuro: #333333;
+    --gris-claro: #F5F5F5;
+    --sombra: rgba(0, 0, 0, 0.1);
+}
+
+/* Reset y base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, var(--verde-claro) 0%, var(--beige-suave) 100%);
+    min-height: 100vh;
+    color: var(--gris-oscuro);
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header */
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+    background: var(--blanco);
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 8px 32px var(--sombra);
+}
+
+.header h1 {
+    font-size: 2.5rem;
+    color: var(--verde-natural);
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.header p {
+    font-size: 1.2rem;
+    color: var(--marron-tierra);
+}
+
+/* Sección de cámara */
+.camera-section {
+    background: var(--blanco);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 8px 32px var(--sombra);
+    margin-bottom: 30px;
+}
+
+.camera-container {
+    position: relative;
+    max-width: 600px;
+    margin: 0 auto 20px;
+    border-radius: 15px;
+    overflow: hidden;
+    background: var(--gris-claro);
+}
+
+#video {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+    display: block;
+}
+
+.camera-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.focus-frame {
+    width: 200px;
+    height: 200px;
+    border: 3px solid var(--amarillo-semilla);
+    border-radius: 50%;
+    position: relative;
+    animation: pulse 2s infinite;
+}
+
+.focus-frame::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: -5px;
+    right: -5px;
+    bottom: -5px;
+    border: 2px solid var(--verde-natural);
+    border-radius: 50%;
+    opacity: 0.7;
+}
+
+.instruction {
+    margin-top: 20px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 10px 20px;
+    border-radius: 25px;
+    font-weight: 600;
+    color: var(--verde-natural);
+    text-align: center;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.8; }
+}
+
+.camera-controls {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+/* Botones */
+.btn {
+    padding: 15px 30px;
+    border: none;
+    border-radius: 50px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 15px var(--sombra);
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px var(--sombra);
+}
+
+.btn-primary {
+    background: linear-gradient(45deg, var(--verde-natural), var(--verde-claro));
+    color: var(--blanco);
+}
+
+.btn-secondary {
+    background: linear-gradient(45deg, var(--marron-tierra), #8D6E63);
+    color: var(--blanco);
+}
+
+.btn-success {
+    background: linear-gradient(45deg, var(--amarillo-semilla), #FFD54F);
+    color: var(--gris-oscuro);
+}
+
+/* Sección de carga */
+.loading-section {
+    text-align: center;
+    background: var(--blanco);
+    border-radius: 20px;
+    padding: 60px 30px;
+    box-shadow: 0 8px 32px var(--sombra);
+}
+
+.loading-spinner {
+    width: 80px;
+    height: 80px;
+    border: 8px solid var(--gris-claro);
+    border-top: 8px solid var(--verde-natural);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-dots {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.loading-dots span {
+    width: 12px;
+    height: 12px;
+    background: var(--verde-natural);
+    border-radius: 50%;
+    animation: bounce 1.4s ease-in-out infinite both;
+}
+
+.loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+.loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes bounce {
+    0%, 80%, 100% { transform: scale(0); }
+    40% { transform: scale(1); }
+}
+
+/* Sección de resultados */
+.results-section {
+    background: var(--blanco);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 8px 32px var(--sombra);
+}
+
+.plant-card {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    align-items: start;
+}
+
+.plant-image-container {
+    position: relative;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 8px 25px var(--sombra);
+}
+
+#capturedImage {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+    display: block;
+}
+
+.confidence-badge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: var(--amarillo-semilla);
+    color: var(--gris-oscuro);
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 15px var(--sombra);
+}
+
+.plant-info {
+    padding: 20px 0;
+}
+
+.plant-name {
+    font-size: 2rem;
+    color: var(--verde-natural);
+    margin-bottom: 10px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.scientific-name {
+    font-style: italic;
+    color: var(--marron-tierra);
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+    padding: 10px;
+    background: var(--beige-suave);
+    border-radius: 10px;
+    border-left: 4px solid var(--verde-natural);
+}
+
+.plant-details {
+    background: var(--gris-claro);
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.detail-item:last-child {
+    border-bottom: none;
+}
+
+.label {
+    font-weight: 600;
+    color: var(--verde-natural);
+}
+
+.value {
+    color: var(--gris-oscuro);
+    font-weight: 500;
+}
+
+.plant-description {
+    background: var(--beige-suave);
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+    line-height: 1.6;
+    color: var(--gris-oscuro);
+}
+
+.action-buttons {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+/* Modal Pokémon */
+.pokemon-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.pokemon-content {
+    background: var(--blanco);
+    border-radius: 25px;
+    padding: 40px;
+    text-align: center;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.5s ease;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.pokemon-animation {
+    position: relative;
+    margin-bottom: 30px;
+}
+
+.pokeball {
+    width: 120px;
+    height: 120px;
+    position: relative;
+    margin: 0 auto;
+    animation: bounce 2s infinite;
+}
+
+.pokeball-top {
+    width: 100%;
+    height: 50%;
+    background: linear-gradient(45deg, #ff0000, #cc0000);
+    border-radius: 60px 60px 0 0;
+    position: absolute;
+    top: 0;
+}
+
+.pokeball-bottom {
+    width: 100%;
+    height: 50%;
+    background: linear-gradient(45deg, #ffffff, #f0f0f0);
+    border-radius: 0 0 60px 60px;
+    position: absolute;
+    bottom: 0;
+    border: 3px solid #333;
+}
+
+.pokeball-center {
+    width: 40px;
+    height: 40px;
+    background: #333;
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border: 4px solid #fff;
+}
+
+.sparkles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+}
+
+.sparkles span {
+    position: absolute;
+    font-size: 2rem;
+    animation: sparkle 2s infinite;
+}
+
+.sparkles span:nth-child(1) { top: 10%; left: 10%; animation-delay: 0s; }
+.sparkles span:nth-child(2) { top: 20%; right: 10%; animation-delay: 0.5s; }
+.sparkles span:nth-child(3) { bottom: 20%; left: 20%; animation-delay: 1s; }
+.sparkles span:nth-child(4) { bottom: 10%; right: 20%; animation-delay: 1.5s; }
+
+@keyframes sparkle {
+    0%, 100% { opacity: 0; transform: scale(0.5); }
+    50% { opacity: 1; transform: scale(1); }
+}
+
+.naming-section {
+    margin-top: 30px;
+}
+
+.naming-section label {
+    display: block;
+    margin-bottom: 15px;
+    font-weight: 600;
+    color: var(--verde-natural);
+    font-size: 1.1rem;
+}
+
+.naming-section input {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid var(--verde-claro);
+    border-radius: 25px;
+    font-size: 1rem;
+    text-align: center;
+    margin-bottom: 20px;
+    transition: border-color 0.3s ease;
+}
+
+.naming-section input:focus {
+    outline: none;
+    border-color: var(--verde-natural);
+    box-shadow: 0 0 0 3px rgba(56, 142, 60, 0.1);
+}
+
+/* Sección de error */
+.error-section {
+    background: var(--blanco);
+    border-radius: 20px;
+    padding: 40px;
+    text-align: center;
+    box-shadow: 0 8px 32px var(--sombra);
+}
+
+.error-card {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.error-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+}
+
+.error-card h3 {
+    color: #e74c3c;
+    margin-bottom: 15px;
+    font-size: 1.5rem;
+}
+
+.error-card p {
+    color: var(--gris-oscuro);
+    margin-bottom: 25px;
+    line-height: 1.6;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .header h1 {
+        font-size: 2rem;
+    }
+    
+    .plant-card {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+    }
+    
+    .camera-controls {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .pokemon-content {
+        padding: 30px 20px;
+    }
+}
+
+/* Animaciones adicionales */
+.plant-card {
+    animation: slideInUp 0.6s ease;
+}
+
+@keyframes slideInUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Efectos hover mejorados */
+.btn:hover {
+    transform: translateY(-3px) scale(1.02);
+}
+
+.plant-image-container:hover {
+    transform: scale(1.02);
+    transition: transform 0.3s ease;
+}
+
+/* Scroll suave */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Estilos adicionales para permisos de cámara */
+#permissionMessage {
+    animation: slideDown 0.5s ease;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Botón deshabilitado */
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.btn:disabled:hover {
+    transform: none !important;
+    box-shadow: 0 4px 15px var(--sombra);
+}
+
+/* Mensaje de éxito */
+.success-message {
+    background: linear-gradient(45deg, #4CAF50, #8BC34A);
+    color: white;
+    padding: 15px;
+    border-radius: 10px;
+    margin: 10px 0;
+    text-align: center;
+    font-weight: 600;
+    animation: slideDown 0.5s ease;
+}
+
+/* Indicadores de estado de cámara */
+.camera-status {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.camera-status.active {
+    background: rgba(76, 175, 80, 0.8);
+}
+
+.camera-status.inactive {
+    background: rgba(244, 67, 54, 0.8);
+}
+
+/* Mejoras para móviles */
+@media (max-width: 768px) {
+    #permissionMessage {
+        margin: 10px;
+        padding: 15px;
+    }
+    
+    #permissionMessage h3 {
+        font-size: 1.2rem;
+    }
+    
+    #permissionMessage p {
+        font-size: 0.9rem;
+    }
+}
+
+/* Animación de pulso para el botón de activar cámara */
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(56, 142, 60, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(56, 142, 60, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(56, 142, 60, 0);
+    }
+}
+
+.btn.pulse {
+    animation: pulse 2s infinite;
+}
